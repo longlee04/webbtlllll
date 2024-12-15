@@ -1,4 +1,5 @@
 <?php
+#chao cac ban 
 session_start();
 if (isset($_GET['act']) && $_GET['act'] != "") {
     $act = $_GET['act'];
