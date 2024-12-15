@@ -1,39 +1,46 @@
 <?php
+// Bắt đầu session để quản lý giỏ hàng
 session_start();
 
 // Kết nối cơ sở dữ liệu
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "db_btl_ptud_web"; # tên csdl 
+$dbname = "db_btl_ptud_web"; // Tên cơ sở dữ liệu
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli($servername, $username, $password, $dbname); // Tạo kết nối với cơ sở dữ liệu
 
+// Kiểm tra nếu kết nối thất bại
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Thêm sản phẩm vào giỏ hàng khi bấm vào biểu tượng túi
-if (isset($_GET['id'])) { #isset là hàm kiểm xem có id của sản phẩm hay không bằng cách lấy giá trị id bằng siêu biến GET[id] trong url  
-    $product_id = intval($_GET['id']); #ép kiểu về số nguyên 
+// Thêm sản phẩm vào giỏ hàng khi người dùng bấm nút
+if (isset($_GET['id'])) { 
+    $product_id = intval($_GET['id']); // Lấy ID sản phẩm từ URL và ép kiểu về số nguyên
+
+    // Lấy thông tin sản phẩm từ cơ sở dữ liệu
     $sql = "SELECT id, name, image, regular_price FROM products WHERE id = $product_id";
     $result = $conn->query($sql);
 
+    // Nếu sản phẩm tồn tại trong cơ sở dữ liệu
     if ($result && $result->num_rows > 0) {
         $product = $result->fetch_assoc();
-        #thêm sanr phẩm vào giỏ hàng
-        if (!isset($_SESSION['cart'][$product_id])) { #trường hợp mà chưa có sản phẩm trong cửa hàng 
-            $_SESSION['cart'][$product_id] = [ #lưu giá trị của mảng vào siêu biến session 
+
+        // Nếu sản phẩm chưa có trong giỏ hàng, thêm sản phẩm mới vào session
+        if (!isset($_SESSION['cart'][$product_id])) { 
+            $_SESSION['cart'][$product_id] = [ 
                 'name' => $product['name'],
                 'price' => $product['regular_price'],
                 'image' => $product['image'],
-                'quantity' => 1
+                'quantity' => 1 // Mặc định số lượng là 1
             ];
-        #trường hợp sản phẩm đã có trong cửa hàng 
-        } else {
+        } else { 
+            // Nếu sản phẩm đã tồn tại trong giỏ hàng, tăng số lượng sản phẩm lên 1
             $_SESSION['cart'][$product_id]['quantity']++;
         }
 
+        // Chuyển hướng về trang giỏ hàng
         header("Location: cart.php");
         exit();
     }
@@ -41,36 +48,39 @@ if (isset($_GET['id'])) { #isset là hàm kiểm xem có id của sản phẩm h
 
 // Xóa sản phẩm khỏi giỏ hàng
 if (isset($_POST['remove_item'])) {
-    $product_id = intval($_POST['product_id']);
-    unset($_SESSION['cart'][$product_id]); #xóa sản phẩm khỏi giỏ hàng 
+    $product_id = intval($_POST['product_id']); // Lấy ID sản phẩm từ form
+    unset($_SESSION['cart'][$product_id]); // Xóa sản phẩm khỏi session
 }
 
-// Cập nhật số lượng sản phẩm
+// Cập nhật số lượng sản phẩm trong giỏ hàng
 if (isset($_POST['update_cart'])) {
-    $product_id = intval($_POST['product_id']);
-    $new_quantity = intval($_POST['quantity']);
+    $product_id = intval($_POST['product_id']); // Lấy ID sản phẩm từ form
+    $new_quantity = intval($_POST['quantity']); // Lấy số lượng mới từ form
 
     if ($new_quantity > 0) {
-        $_SESSION['cart'][$product_id]['quantity'] = $new_quantity;
+        $_SESSION['cart'][$product_id]['quantity'] = $new_quantity; // Cập nhật số lượng mới
     } else {
-        unset($_SESSION['cart'][$product_id]);
+        unset($_SESSION['cart'][$product_id]); // Xóa sản phẩm nếu số lượng = 0
     }
 }
 
-// Xử lý thanh toán
+// Xử lý thanh toán giỏ hàng
 if (isset($_POST['checkout'])) {
-    $address = trim($_POST['address']);
-    $phone = trim($_POST['phone']);
+    $address = trim($_POST['address']); // Lấy địa chỉ nhận hàng từ form
+    $phone = trim($_POST['phone']); // Lấy số điện thoại từ form
 
+    // Kiểm tra nếu người dùng nhập đầy đủ thông tin
     if (!empty($address) && !empty($phone)) {
-        // Ở đây có thể thêm xử lý lưu thông tin đơn hàng vào cơ sở dữ liệu nếu cần
+        // Có thể thêm chức năng lưu đơn hàng vào cơ sở dữ liệu tại đây nếu cần
 
         // Xóa giỏ hàng sau khi đặt hàng thành công
         unset($_SESSION['cart']);
 
+        // Hiển thị thông báo đặt hàng thành công và chuyển hướng về trang chủ
         echo "<script>alert('Bạn đã đặt hàng thành công!'); window.location.href='home.php';</script>";
         exit();
     } else {
+        // Hiển thị thông báo nếu thông tin không đầy đủ
         echo "<script>alert('Vui lòng nhập đầy đủ thông tin địa chỉ và số điện thoại!');</script>";
     }
 }
@@ -82,8 +92,9 @@ if (isset($_POST['checkout'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giỏ hàng</title>
-    <link rel="stylesheet" href="../../../public/css/user/main.css">
+    <link rel="stylesheet" href="../../../public/css/user/main.css"> <!-- Kết nối file CSS -->
     <style>
+        /* Phong cách cơ bản cho giao diện */
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
@@ -179,9 +190,12 @@ if (isset($_POST['checkout'])) {
 </head>
 <body>
     <div class="container">
+        <!-- Tiêu đề trang -->
         <h1>Giỏ hàng của bạn</h1>
+
+        <!-- Kiểm tra nếu giỏ hàng không rỗng -->
         <?php if (!empty($_SESSION['cart'])): ?>
-            <form method="POST" action="cart.php"> <!--gửi một form bằng phương thức POST đến trang cart.php để xử lý trên seversever--> 
+            <form method="POST" action="cart.php"> <!-- Gửi form qua phương thức POST để xử lý -->
                 <table>
                     <thead>
                         <tr>
@@ -195,10 +209,10 @@ if (isset($_POST['checkout'])) {
                     </thead>
                     <tbody>
                         <?php 
-                        $total_price = 0;
+                        $total_price = 0; // Biến lưu tổng tiền giỏ hàng
                         foreach ($_SESSION['cart'] as $id => $item): 
-                            $subtotal = $item['price'] * $item['quantity'];
-                            $total_price += $subtotal;
+                            $subtotal = $item['price'] * $item['quantity']; // Tính tổng tiền từng sản phẩm
+                            $total_price += $subtotal; // Cộng dồn vào tổng tiền
                         ?>
                             <tr>
                                 <td><img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>"></td>
@@ -224,9 +238,10 @@ if (isset($_POST['checkout'])) {
                     </tfoot>
                 </table>
                 <div class="checkout-form">
+                    <!-- Form nhập thông tin thanh toán -->
                     <label for="address">Địa chỉ nhận hàng</label>
                     <input type="text" id="address" name="address" >
-
+                    
                     <label for="phone">Số điện thoại</label>
                     <input type="text" id="phone" name="phone" >
 
