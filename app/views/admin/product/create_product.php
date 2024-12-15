@@ -1,10 +1,15 @@
 <?php
+// Kiểm tra nếu biến $result_of_store_product đã được gán giá trị
 if (isset($result_of_store_product)) {
     echo $result_of_store_product;
+      // Khởi tạo biến $message là chuỗi rỗng
     $message = "";
+    // Kiểm tra kết quả thành công hay thất bại
     if ($result_of_store_product == true) {
+        // Gán thông báo thành công nếu $result_of_store_product là true
         $message = "Thêm mới sản phẩm thành công!";
     } else if ($result_of_store_product == false) {
+         // Gán thông báo thất bại nếu $result_of_store_product là false
         $message = "Thêm mới sản phẩm không thành công!";
     }
 }
@@ -12,14 +17,19 @@ if (isset($result_of_store_product)) {
 <div>
     <h2>Thêm mới sản phẩm</h2>
     <div>
+     <!-- Liên kết trở về danh sách sản phẩm -->
         <a class="btn btn-secondary" href="?act=list_products"><i class="fas fa-arrow-left me-1"></i>Quay lại</a>
     </div>
+    
+    <!-- Form tạo mới sản phẩm -->
     <form class="mt-4" action="?act=store_product" method="post" enctype="multipart/form-data" id="form_create_product">
         <?php
+ // Kiểm tra nếu biến $message tồn tại và không rỗng
         if (isset($message) && $message != "") {
+              // Hiển thị thông báo kết quả (thành công hoặc thất bại)
             echo '<div class="mb-4 text-center">
             <span class="">' . $message . '</span>
-        </div>';
+        </div>'; 
         }
         ?>
 
